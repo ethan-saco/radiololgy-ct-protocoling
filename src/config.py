@@ -8,7 +8,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Model configuration
-MODEL_NAME = "gpt-4-turbo-preview"  # or your preferred model
+MODEL_NAME = "o1-mini-2024-09-12"  # or your preferred model
 
 # Data configuration
 INPUT_DATA_PATH = "data/input.csv"
