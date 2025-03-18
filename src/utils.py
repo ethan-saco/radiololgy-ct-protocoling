@@ -105,11 +105,9 @@ def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str
             f"- Example Indications: {row['Example_Indications']}\n"
         )
 
-    # Updated protocol selection guidance with oral contrast guidelines
+# Protocol Selection Guidance provided to the model
     protocol_selection_guidance = """
-CRITICAL: Protocol Selection Rules
-
-1. PROTOCOL SELECTION:
+1. PROTOCOL SELECTION RULES/GUIDELINES:
 
    A. SPECIFIC PROTOCOLS:
    First check if the exam matches specific protocols in the reference document:
@@ -124,7 +122,7 @@ CRITICAL: Protocol Selection Rules
    - Any special instructions
 
    B. GENERAL PROTOCOL SELECTION (C/A/P vs A/P):
-   If no specific protocol applies, examine both CT exam and clinical info:
+   If no specific protocol applies, analyze both requested CT exam and clinical info:
    
    USE C/A/P ONLY IF:
    A. CT Exam EXPLICITLY requests chest imaging:
@@ -151,44 +149,24 @@ CRITICAL: Protocol Selection Rules
 
 2. ORAL CONTRAST GUIDELINES:
    
-   DEFAULT TO "NONE" FOR MOST CASES:
-   - Emergency department patients
-   - Trauma cases
-   - Renal protocols
-   - Cancer staging
-   - Vascular studies
-   - Most routine abdominal/pelvic imaging
-   - Most follow-up studies
-   - Any case where oral contrast is not specifically indicated
+    None:
+   -DEFAULT TO "NONE" unless there is a specific indication for oral contrast.
    
-   USE "WATER BASE" FOR:
-   - Suspected bowel leakage or perforation
-   - Workup of enterocutaneous fistula or enterovaginal fistula
-   - Urogram studies (preferred over "Water Only")
-   - Cases where water-density oral contrast is specifically requested
-   - Do not use for routine abdominal pain or standard protocols
-   - Do not use for ER patients unless specifically requested by radiologist
+    Water base:
+    -Ovarian or gastrointestinal (stomach, esophagus, appendix, colon) primary malignancy followup. 
+    -Recent abdominal surgery to rule out injury versus perforation/leak.
+    -If looking for very proximal bowel leak (stomach, duodenum e.g. peptic ulcer disease, post RNY gastric bypass).
 
-   USE "WATER ONLY" FOR:
-   - Urogram studies
-   - Only when specifically requested instead of "Water base"
-   - Very rarely used - prefer "Water base" in most cases
+    Rectal contrast:
+    -Rule out anastomotic leak (colorectal, sigmoid colon)
+    -Rule out rectal, sigmoid injury/perforation
 
-   USE "READI-CAT" ONLY FOR:
-   - Suspected complete small bowel obstruction WITH specific request from radiologist
-   - Active inflammatory bowel disease ONLY when specifically requested
-   - NEVER use for routine abdominal pain, standard protocols, ER patients unless specifically requested, or follow-up studies
-   - NEVER use for suspected bowel perforation or fistula (use Water base instead)
+    Water only:
+    -CT urogram
 
-   USE "OTHER (RECTAL)" ONLY FOR:
-   - Rectal cancer staging
-   - Perianal fistula/abscess evaluation
-   - Other specific rectal/perianal conditions requiring rectal contrast
-
-   USE "OTHER" or "OTHER (3% sorbitol)" ONLY FOR:
-   - Very specific protocols that explicitly require these contrast agents
-   - Only when specifically requested by the radiologist
-   - These are rarely used special cases
+    Sorbitol 3%:
+    -Evaluate inflammatory bowel disease (IBD)
+    -Iron deficiency anemia (IDA) and negative scope
 
 3. IV CONTRAST GUIDELINES:
    
@@ -212,10 +190,6 @@ CRITICAL: Protocol Selection Rules
    IMPORTANT: When in doubt, default to "C+" unless there is a specific clinical indication for "C-"
 
 4. PRIORITY GUIDELINES:
-   - Use A/P as the default protocol
-   - Only use C/A/P when chest imaging is EXPLICITLY needed based on exam request OR clinical necessity
-   - When in doubt, choose A/P - C/A/P should only be used when clearly indicated
-   - Follow the example cases for similar scenarios
    
 Priority 1:
    -LOCATION "ER" ALWAYS GETS PRIORITY 1
@@ -234,152 +208,16 @@ Priority 4:
 -Most malignancy follow-up
 -Most OP studies
 -Chronic/non-urgent (e.g., abdominal xmonths or years)
-
-5. EXAMPLE CASES:
-
-   Study these example cases carefully to understand the correct protocol selection:
-
-   Case 1:
-   Location: ER
-   CT Exam: Abdo pain ? appendicitis
-   Clinical Info: RLQ pain, fever, elevated WBC
-   -> Recommendation:
-   {
-       "priority": 1,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 2:
-   Location: OP
-   CT Exam: CT renal mass
-   Clinical Info: 3cm right renal mass on US, characterization needed
-   -> Recommendation:
-   {
-       "priority": 3,
-       "protocol": "Renal mass",
-       "iv_contrast": "C+ and C-",
-       "oral_contrast": "None"
-   }
-
-   Case 3:
-   Location: ER
-   CT Exam: Renal stone
-   Clinical Info: Left flank pain, hematuria
-   -> Recommendation:
-   {
-       "priority": 1,
-       "protocol": "Renal colic",
-       "iv_contrast": "C-",
-       "oral_contrast": "None"
-   }
-
-   Case 4:
-   Location: IP
-   CT Exam: CT C/A/P
-   Clinical Info: Staging for newly diagnosed colon cancer
-   -> Recommendation:
-   {
-       "priority": 3,
-       "protocol": "C/A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 5:
-   Location: OP
-   CT Exam: CT abdomen pelvis
-   Clinical Info: Chronic abdominal pain, bloating
-   -> Recommendation:
-   {
-       "priority": 4,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 6:
-   Location: IP
-   CT Exam: CT abdomen
-   Clinical Info: Suspected complete small bowel obstruction, radiologist requested oral contrast
-   -> Recommendation:
-   {
-       "priority": 1,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "Readi-Cat"
-   }
-
-   Case 7:
-   Location: OP
-   CT Exam: CT pelvis
-   Clinical Info: Rectal cancer staging
-   -> Recommendation:
-   {
-       "priority": 3,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "Other (rectal)"
-   }
-
-   Case 8:
-   Location: IP
-   CT Exam: CT abdomen pelvis
-   Clinical Info: Abdominal pain, rule out appendicitis
-   -> Recommendation:
-   {
-       "priority": 2,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 9:
-   Location: OP
-   CT Exam: CT abdomen pelvis
-   Clinical Info: Diverticulitis follow-up
-   -> Recommendation:
-   {
-       "priority": 4,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 10:
-   Location: IP
-   CT Exam: CT abdomen
-   Clinical Info: Abdominal pain, possible partial small bowel obstruction
-   -> Recommendation:
-   {
-       "priority": 2,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "None"
-   }
-
-   Case 11:
-   Location: IP
-   CT Exam: CT abdomen pelvis
-   Clinical Info: Post-operative day 3, fever, abdominal pain, suspected anastomotic leak
-   -> Recommendation:
-   {
-       "priority": 1,
-       "protocol": "A/P",
-       "iv_contrast": "C+",
-       "oral_contrast": "Water base"
-   }
 """
 
-    # Add example cases for training
+# Add example cases (few shot prompting)
     example_cases = """
-EXAMPLE CASES - Study these examples carefully:
+EXAMPLE CASES - Study these example cases carefully to understand the correct protocol selection:
 
 Case 1:
 Location: ER
-CT Exam: Abdo pain ? appendicitis
-Clinical Info: RLQ pain, fever, elevated WBC
+CT Exam: CT A/P with contrast
+Clinical Info: RLQ pain, fever, elevated WBC, Abdo pain ? appendicitis
 -> Recommendation:
 {
     "priority": 1,
@@ -391,7 +229,7 @@ Clinical Info: RLQ pain, fever, elevated WBC
 Case 2:
 Location: OP
 CT Exam: CT renal mass
-Clinical Info: 3cm right renal mass on US, characterization needed
+Clinical Info: 3cm right renal lesion on US, characterization needed
 -> Recommendation:
 {
     "priority": 3,
@@ -403,7 +241,7 @@ Clinical Info: 3cm right renal mass on US, characterization needed
 Case 3:
 Location: ER
 CT Exam: Renal stone
-Clinical Info: Left flank pain, hematuria
+Clinical Info: Left flank pain, hematuria, ?nephrolithiasis
 -> Recommendation:
 {
     "priority": 1,
@@ -437,39 +275,39 @@ Clinical Info: Chronic abdominal pain, bloating
 }
 
 Case 6:
-Location: IP
-CT Exam: CT abdomen
-Clinical Info: Suspected complete small bowel obstruction, radiologist requested oral contrast
+Location: OP
+CT Exam: CAP
+Clinical Info: 79F, surveillance post resected colon (Left hemicolectomy 3 years ago)
 -> Recommendation:
 {
-    "priority": 1,
-    "protocol": "A/P",
-    "iv_contrast": "C+",
-    "oral_contrast": "Readi-Cat"
+    "priority": 4,
+    "protocol": "CAP", 
+    "iv_contrast": "C+", 
+    "oral_contrast": "Water Base"
 }
 
 Case 7:
-Location: OP
-CT Exam: CT pelvis
-Clinical Info: Rectal cancer staging
+Location: IP
+CT Exam: CT Enterography
+Clinical Info: Male, 75 years old. Severe iron deficiency anemia (hemoglobin 60s). Negative scopes. Rule out small bowel lesion.
 -> Recommendation:
 {
     "priority": 3,
-    "protocol": "A/P",
+    "protocol": "Enterography",
     "iv_contrast": "C+",
-    "oral_contrast": "Other (rectal)"
+    "oral_contrast": "Other (3% sorbitol)"
 }
 
 Case 8:
 Location: IP
-CT Exam: CT abdomen pelvis
-Clinical Info: Abdominal pain, rule out appendicitis
+CT Exam: AP w/ contrast
+Clinical Info: 72M, POD #5 sigmoid resection r/o anastomotic leak.
 -> Recommendation:
 {
     "priority": 2,
     "protocol": "A/P",
     "iv_contrast": "C+",
-    "oral_contrast": "None"
+    "oral_contrast": "Other (rectal)"
 }
 
 Case 9:
@@ -509,9 +347,9 @@ Clinical Info: Post-operative day 3, fever, abdominal pain, suspected anastomoti
 }
 """
 
-    # Update the prompt to include example cases
+# USER PROMPT
     prompt = f"""You are a CT protocol assistant. Your task is to analyze the patient information and provide precise protocol recommendations.
-You must strictly follow the protocol selection rules and priority guidelines.
+You must follow the protocol selection rules and guidelines.
 
 First, study these example cases carefully to understand the correct protocol selection:
 {example_cases}
@@ -521,7 +359,7 @@ Now, analyze this new case:
 Patient Information:
 Study ID: {patient_info['Study_ID']}
 Location: {patient_info['Location']}
-CT Exam: {patient_info['CT_Exam']}
+CT Exam Requested: {patient_info['CT_Exam']}
 Clinical Info: {patient_info['Clinical_Info']}
 Prior Contrast Reaction: {patient_info.get('Prior_Reaction', 'None')}
 eGFR: {patient_info['eGFR']} mL/min
@@ -530,13 +368,6 @@ eGFR: {patient_info['eGFR']} mL/min
 
 {protocol_guidance}
 
-IMPORTANT RULES:
-1. Location "ER" ALWAYS gets Priority 1
-2. Use A/P as the default protocol
-3. Only use C/A/P when chest imaging is EXPLICITLY needed based on exam request OR clinical necessity
-4. When in doubt, choose A/P - C/A/P should only be used when clearly indicated
-5. Follow the example cases for similar scenarios
-
 Provide your recommendation in this exact JSON format:
 {{
     "priority": 1,
@@ -544,6 +375,7 @@ Provide your recommendation in this exact JSON format:
     "iv_contrast": "C+ or C- or C+ and C-",
     "oral_contrast": "None or Water base or Water Only or Readi-Cat or Other (rectal) or Other (3% sorbitol)"
 }}"""
+#END of USER PROMPT
 
     try:
         response = openai.chat.completions.create(
