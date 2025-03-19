@@ -45,7 +45,7 @@ def load_protocol_reference(protocol_file: str) -> pd.DataFrame:
 
 def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str, int]) -> Dict:
     """
-    Generate CT protocol recommendations using OpenAI GPT-3.5 model.
+    Generate CT protocol recommendations using OpenAI model.
     
     Args:
         patient_info (dict): Dictionary containing patient information
@@ -201,8 +201,8 @@ Priority 3:
 -Acute semi-urgent (e.g., stable, abdominal pain xdays)
 
 Priority 4:
--Most malignancy follow-up
 -Most OP studies
+-Most malignancy follow-up
 -Chronic/non-urgent (e.g., abdominal xmonths or years)
 """
 
@@ -388,23 +388,11 @@ Provide your recommendation in this exact JSON format:
         recommendations = eval(response.choices[0].message.content)
         
         # Enhanced validation - FIRST check for ER patients and set priority 1
-        # This check is moved to the top of the validation to ensure it takes precedence
         if patient_info['Location'].strip().upper() == 'ER' or patient_info['Location'].strip().upper() == 'ED':
             recommendations['priority'] = 1
-            
-        # Validate priority is numeric and in range
-        try:
-            recommendations['priority'] = int(recommendations['priority'])
-            if recommendations['priority'] not in VALID_PRIORITIES:
-                # If invalid priority and not ER, default to 4
-                if not (patient_info['Location'].strip().upper() == 'ER' or patient_info['Location'].strip().upper() == 'ED'):
-                    recommendations['priority'] = 4
-        except (ValueError, TypeError):
-            # If conversion fails and not ER, default to 4
-            if not (patient_info['Location'].strip().upper() == 'ER' or patient_info['Location'].strip().upper() == 'ED'):
-                recommendations['priority'] = 4
-            else:
-                recommendations['priority'] = 1
+        # Set priority to 2 for inpatient (IP) locations
+        elif patient_info['Location'].strip().upper() == 'IP':
+            recommendations['priority'] = 2
             
         # Check protocol reference for specific protocols
         exam = str(patient_info['CT_Exam']).lower() if not pd.isna(patient_info['CT_Exam']) else ""
@@ -452,12 +440,10 @@ Provide your recommendation in this exact JSON format:
         # More selective C/A/P validation
         if recommendations.get('protocol') == 'C/A/P':
             explicit_cap_terms = ['c/a/p', 'cap', 'chest', 'thorax', 'c.a.p']
-            clinical_cap_terms = ['metastatic cancer', 'major trauma', 'chest and abdomen']
             
-            if not (any(term in exam for term in explicit_cap_terms) or
-                   any(term in info for term in clinical_cap_terms)):
+            if not any(term in exam for term in explicit_cap_terms):
                 recommendations['protocol'] = 'A/P'
-                
+        
         # Rest of validation
         valid_oral_contrast = VALID_ORAL_CONTRAST
         if 'oral_contrast' not in recommendations or recommendations['oral_contrast'] not in valid_oral_contrast:
@@ -469,45 +455,15 @@ Provide your recommendation in this exact JSON format:
             recommendations['iv_contrast'] = "C-"
         elif 'iv_contrast' not in recommendations or recommendations['iv_contrast'] not in VALID_IV_CONTRAST:
             recommendations['iv_contrast'] = "C+"  # Default to C+ instead of C-
-            
-        # Strict validation for oral contrast - override Readi-Cat in most cases
-        if recommendations.get('oral_contrast') == "Readi-Cat":
-            # Only allow Readi-Cat for very specific conditions
-            bowel_obstruction_terms = ['bowel obstruction', 'obstruction', 'ileus', 'sbo']
-            ibd_terms = ['crohn', 'ulcerative colitis', 'inflammatory bowel']
-            radiologist_request_terms = ['radiologist requested', 'radiologist request', 'per radiologist', 'as requested by radiologist']
-            
-            # Check if any of these specific terms are in the clinical info
-            has_bowel_condition = any(term in info for term in bowel_obstruction_terms) or any(term in info for term in ibd_terms)
-            has_radiologist_request = any(term in info for term in radiologist_request_terms)
-            
-            # Only allow Readi-Cat if both condition is present AND radiologist requested it
-            if not (has_bowel_condition and has_radiologist_request):
-                # If not both conditions, override to None
-                recommendations['oral_contrast'] = "None"
         
         # Check for urogram studies first
         urogram_terms = ['urogram', 'ctu', 'ct urography']
         if any(term in exam.lower() for term in urogram_terms):
-            # For urogram studies, use Water base (preferred) or keep Water Only if specifically requested
+            # For urogram studies, use Water only (preferred)
             if recommendations.get('oral_contrast') not in ["Water Only", "Water base"]:
-                recommendations['oral_contrast'] = "Water base"
+                recommendations['oral_contrast'] = "Water Only"
             # Ensure urogram studies use C+ and C- contrast
             recommendations['iv_contrast'] = "C+ and C-"
-            
-        # Then check for conditions that should use Water base
-        bowel_perforation_terms = ['perforation', 'perforated', 'leak', 'anastomotic leak']
-        fistula_terms = ['fistula', 'enterocutaneous', 'enterovaginal']
-        
-        if any(term in info for term in bowel_perforation_terms) or any(term in info for term in fistula_terms):
-            # For these conditions, override to Water base
-            recommendations['oral_contrast'] = "Water base"
-            
-        # Then check for rectal cancer or perianal conditions
-        rectal_terms = ['rectal cancer', 'rectal mass', 'rectal tumor', 'perianal', 'anal cancer', 'anus cancer']
-        if any(term in info for term in rectal_terms) or ('rect' in info and ('cancer' in info or 'staging' in info)):
-            # For rectal cancer, use Other (rectal)
-            recommendations['oral_contrast'] = "Other (rectal)"
             
         # Final check for ER patients to ensure priority 1
         if patient_info['Location'].strip().upper() == 'ER' or patient_info['Location'].strip().upper() == 'ED':
@@ -527,7 +483,7 @@ Provide your recommendation in this exact JSON format:
             }
         else:
             return {
-                "priority": 4,
+                "priority": "no data",
                 "protocol": "no data",
                 "iv_contrast": "no data",
                 "oral_contrast": "no data"
