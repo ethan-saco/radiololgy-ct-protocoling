@@ -146,25 +146,23 @@ def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str
    - Routine abdominal/pelvic complaints
 
 2. ORAL CONTRAST GUIDELINES:
-   
-    None:
-   -DEFAULT TO "NONE" unless there is a specific indication for oral contrast.
+   -DEFAULT TO "NONE" unless there is a specific indication for oral contrast, as indicated below.
    
     Water base:
-    -Ovarian or gastrointestinal (stomach, esophagus, appendix, colon) primary malignancy followup AND request for contrast. 
+    -Specific request for oral contrast for ovarian or gastrointestinal primary malignancy followup  
     -Recent abdominal surgery and request for contrast to rule out injury versus perforation/leak.
-    -If looking for very proximal bowel leak (stomach, duodenum e.g. peptic ulcer disease, post RNY gastric bypass).
+    -Specific request for oral contrast to look for very proximal bowel leak (stomach, duodenum e.g. peptic ulcer disease, post RNY gastric bypass).
 
     Rectal contrast:
-    -Rule out anastomotic leak (colorectal, sigmoid colon) AND request for contrast.
-    -Rule out rectal, sigmoid injury/perforation AND request for contrast.
+    -Specific request for rectal contrast to rule out anastomotic leak (e.g colorectal, sigmoid colon)
+    -Specific request for rectal contrast to rule out rectal or sigmoid injury/perforation
 
     Water only:
     -CT urogram
 
     Sorbitol 3%:
-    -Evaluate inflammatory bowel disease (IBD)
-    -Iron deficiency anemia (IDA) and negative scope
+    -Specific request for oral contrast to evaluate inflammatory bowel disease (IBD)
+    -Iron deficiency anemia (IDA) and history ofnegative scope
 
 3. IV CONTRAST GUIDELINES:
    
@@ -334,7 +332,7 @@ Clinical Info: Abdominal pain, possible partial small bowel obstruction
 
 Case 11:
 Location: IP
-CT Exam: CT abdomen pelvis
+CT Exam: CT abdomen pelvis w/ oral contrast
 Clinical Info: Post-operative day 3, fever, abdominal pain, suspected anastomotic leak
 -> Recommendation:
 {
