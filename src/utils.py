@@ -122,7 +122,7 @@ def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str
    - Any special instructions
 
    B. GENERAL PROTOCOL SELECTION (C/A/P vs A/P):
-   If no specific protocol applies, analyze both requested CT exam and clinical info:
+   When in doubt, default to A/P unless chest imaging (C/A/P) is specifically requested.
    
    USE C/A/P ONLY IF:
    A. CT Exam EXPLICITLY requests chest imaging:
@@ -144,8 +144,6 @@ def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str
    - Follow-up of known abdominal/pelvic pathology
    - No specific indication for chest imaging
    - Routine abdominal/pelvic complaints
-   
-   NOTE: When in doubt, default to A/P unless chest imaging is specifically needed
 
 2. ORAL CONTRAST GUIDELINES:
    
@@ -153,13 +151,13 @@ def generate_protocol_recommendations(patient_info: dict, egfr: Union[float, str
    -DEFAULT TO "NONE" unless there is a specific indication for oral contrast.
    
     Water base:
-    -Ovarian or gastrointestinal (stomach, esophagus, appendix, colon) primary malignancy followup. 
-    -Recent abdominal surgery to rule out injury versus perforation/leak.
+    -Ovarian or gastrointestinal (stomach, esophagus, appendix, colon) primary malignancy followup AND request for contrast. 
+    -Recent abdominal surgery and request for contrast to rule out injury versus perforation/leak.
     -If looking for very proximal bowel leak (stomach, duodenum e.g. peptic ulcer disease, post RNY gastric bypass).
 
     Rectal contrast:
-    -Rule out anastomotic leak (colorectal, sigmoid colon)
-    -Rule out rectal, sigmoid injury/perforation
+    -Rule out anastomotic leak (colorectal, sigmoid colon) AND request for contrast.
+    -Rule out rectal, sigmoid injury/perforation AND request for contrast.
 
     Water only:
     -CT urogram
@@ -196,7 +194,7 @@ Priority 1:
    -Urgent IP indications (e.g., ICU rule out bowel ischemia)
 
 Priority 2:
-   -Most inpatients 
+   -Most inpatients (IP)
    -Selected urgent OP (e.g., rule out renal colic, diverticulitis as OP)
 
 Priority 3:
@@ -256,7 +254,7 @@ CT Exam: CT C/A/P
 Clinical Info: Staging for newly diagnosed colon cancer
 -> Recommendation:
 {
-    "priority": 3,
+    "priority": 2,
     "protocol": "C/A/P",
     "iv_contrast": "C+",
     "oral_contrast": "None"
@@ -283,7 +281,7 @@ Clinical Info: 79F, surveillance post resected colon (Left hemicolectomy 3 years
     "priority": 4,
     "protocol": "CAP", 
     "iv_contrast": "C+", 
-    "oral_contrast": "Water Base"
+    "oral_contrast": "None"
 }
 
 Case 7:
@@ -340,7 +338,7 @@ CT Exam: CT abdomen pelvis
 Clinical Info: Post-operative day 3, fever, abdominal pain, suspected anastomotic leak
 -> Recommendation:
 {
-    "priority": 1,
+    "priority": 2,
     "protocol": "A/P",
     "iv_contrast": "C+",
     "oral_contrast": "Water base"
@@ -370,7 +368,7 @@ eGFR: {patient_info['eGFR']} mL/min
 
 Provide your recommendation in this exact JSON format:
 {{
-    "priority": 1,
+    "priority": 1 or 2 or 3 or 4,
     "protocol": "A/P or C/A/P or other specific protocol",
     "iv_contrast": "C+ or C- or C+ and C-",
     "oral_contrast": "None or Water base or Water Only or Readi-Cat or Other (rectal) or Other (3% sorbitol)"
