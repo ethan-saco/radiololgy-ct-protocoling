@@ -1,7 +1,12 @@
 import openai
+from openai import OpenAI
 import pandas as pd
+import os
 from typing import Dict, Union
 from config import PROTOCOL_REFERENCE_PATH, VALID_PRIORITIES, VALID_IV_CONTRAST, VALID_ORAL_CONTRAST, EGFR_CONTRAINDICATED, MODEL_NAME, MODEL_TEMPERATURE, SYSTEM_PROMPT
+
+# Initialize OpenAI client with API key from environment
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def load_data(file_path: str) -> pd.DataFrame:
     """
@@ -374,7 +379,7 @@ Provide your recommendation in this exact JSON format:
 #END of USER PROMPT
 
     try:
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},

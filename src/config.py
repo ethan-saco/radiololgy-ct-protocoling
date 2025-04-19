@@ -11,7 +11,7 @@ MODEL_NAME = "gpt-4o-2024-11-20"
 MODEL_TEMPERATURE = 0  
 
 # Data configuration
-INPUT_DATA_PATH = "data/Data-Extraction-Table.csv"
+INPUT_DATA_PATH = "data/Replacement_Cases.csv"
 OUTPUT_DATA_PATH = "data/output.csv"
 PROTOCOL_REFERENCE_PATH = "data/KGH-Protocols.xlsx"
 EGFR_CONTRAINDICATED = 30
